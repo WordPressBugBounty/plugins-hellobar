@@ -1,11 +1,13 @@
 ﻿=== Hello Bar Popup Builder: Design Engaging Popups on WordPress  ===
-Contributors: hellobar
+Contributors: hellobar, mahendrachoudhary
 Donate link: https://www.hellobar.com/
-Tags: popup, popups, optin, conversion, marketing, newsletter, popup builder, popup maker, email marketing, exit popup, ecommerce, woocommerce, lightbox
-Requires at least: 2.9.0
-Requires PHP: 5.0
-Tested up to: 6.5
-Stable tag: 1.4
+Tags: popup builder, conversion, marketing,  newsletter, woocommerce
+Requires at least: 5.0
+Requires PHP: 7.4
+Tested up to: 6.8
+Stable tag: 1.5.1
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Easily add a Popup to your WordPress site with the official HelloBar WordPress plugin.
 
@@ -132,6 +134,16 @@ Get all the answers you seek by visiting our [support center](https:**//support.
 
 
 == Changelog ==
+= Hello bar Popup Builder 1.5.1 =
+* PHP 7.4+ and PHP 8.x compatibility updates
+* Modernized callbacks and removed deprecated patterns
+* Enhanced security and URL handling
+
+= Hello bar Popup Builder 1.5 =
+* Capability test with wordpress version 6.8 ready for WP 6.8
+* Improved PHP version requirements to 7.4
+* Updated tags to meet WordPress.org requirements (max 5)
+
 = Hello bar Popup Builder 1.4 =
 * Capability test with wordpress version 6.5 ready for WP 6.5
 

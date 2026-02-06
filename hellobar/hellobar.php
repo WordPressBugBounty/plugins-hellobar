@@ -7,17 +7,21 @@
  * @package Hello Bar: The Original Popup Software (Top Bars, Exit Intents, Sliders, & More to Grow Your Email List!)
  *
  * @author  hellobar
- * @version 1.4
+ * @version 1.5.1
  */
 /*
 Plugin Name: Hello Bar for WordPress
 Plugin URI: http://www.hellobar.com/
 Description: The Original Popup Software (Top Bars, Exit Intents, Sliders, & More to Grow Your Email List!)
-Version: 1.4
-Tested up to: 6.5
+Version: 1.5.1
+Tested up to: 6.8
+Requires at least: 5.0
+Requires PHP: 7.4
 Author: hellobar
 Author URI: http://www.hellobar.com
-License: GPL2
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
 Copyright 2018 Hello Bar  (email:support@hellobar.com)
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
@@ -25,11 +29,14 @@ You should have received a copy of the GNU General Public License along with thi
 */
 class HelloBarForWordPress
 {
-    var $longname     =   "Hello Bar for WordPress";
-    var $shortname     =   "HelloBar";
-    var $namespace     =   'hellobar-for-wordpress';
-    var $version     =   '1.4';
-    var $defaults     =    array('hellobar_code'=>"",'load_hellobar_in'=>'footer');
+    var $longname    =   "Hello Bar for WordPress";
+    var $shortname   =   "HelloBar";
+    var $namespace   =   'hellobar-for-wordpress';
+    var $version     =   '1.5.1';
+    var $defaults    =   array('hellobar_code'=>"",'load_hellobar_in'=>'footer');
+    var $url_path;
+    var $option_name;
+    var $options;
     public static function init()
     {
         $class = __CLASS__;
@@ -37,26 +44,21 @@ class HelloBarForWordPress
     }
     function __construct()
     {
-        $this->url_path = WP_PLUGIN_URL . '/' . plugin_basename(dirname(__FILE__));
-        if (isset($_SERVER['HTTPS'])) {
-            if ((boolean) $_SERVER['HTTPS']===true) {
-                $this->url_path = str_replace('http://', 'https://', $this->url_path);
-            }
-        }
+        $this->url_path = plugin_dir_url(__FILE__);
         $this->option_name = '_'.$this->namespace.'--options';
-        add_action('admin_menu', array(&$this,'admin_menu'));
+        add_action('admin_menu', array($this,'admin_menu'));
         if (is_admin()) {
         } else {
             if ($this->get_option('load_hellobar_in') == 'header') {
-                add_action('wp_head', array(&$this,'hellobar_print_script'));
-                add_action('wp_head', array(&$this,'hellobar_insert_tags'));
+                add_action('wp_head', array($this,'hellobar_print_script'));
+                add_action('wp_head', array($this,'hellobar_insert_tags'));
             } else {
                 if (function_exists('wp_print_footer_scripts')) {
-                    add_action('wp_print_footer_scripts', array(&$this,'hellobar_print_script'));
-                    add_action('wp_print_footer_scripts', array(&$this,'hellobar_insert_tags'));
+                    add_action('wp_print_footer_scripts', array($this,'hellobar_print_script'));
+                    add_action('wp_print_footer_scripts', array($this,'hellobar_insert_tags'));
                 } else {
-                    add_action('wp_footer', array(&$this,'hellobar_print_script'));
-                    add_action('wp_footer', array(&$this,'hellobar_insert_tags'));
+                    add_action('wp_footer', array($this,'hellobar_print_script'));
+                    add_action('wp_footer', array($this,'hellobar_insert_tags'));
                 }
             }
         }
@@ -108,7 +110,7 @@ class HelloBarForWordPress
     }
     public function admin_menu()
     {
-        add_menu_page($this->shortname, $this->shortname, 'manage_options', basename(__FILE__), array(&$this,'admin_options_page'), ($this->url_path.'/images/icon.png'));
+        add_menu_page($this->shortname, $this->shortname, 'manage_options', basename(__FILE__), array($this,'admin_options_page'), ($this->url_path.'/images/icon.png'));
     }
     public function admin_options_page()
     {
@@ -116,7 +118,7 @@ class HelloBarForWordPress
             wp_die('You do not have sufficient permissions to access this page');
         }
         if (isset($_POST) && !empty($_POST)) {
-            if (wp_verify_nonce($_REQUEST[$this->namespace.'_update_wpnonce'], $this->namespace.'_options')) {
+            if (isset($_REQUEST[$this->namespace.'_update_wpnonce']) && wp_verify_nonce($_REQUEST[$this->namespace.'_update_wpnonce'], $this->namespace.'_options')) {
                 $data = array();
                 foreach ($_POST as $key => $val) {
                     $data[$key] = $this->sanitize_data($val);
@@ -125,7 +127,7 @@ class HelloBarForWordPress
                 case "update_options":
                     $options = array(
                        'hellobar_code'         => (string) $data['hellobar_code'],
-                       'load_hellobar_in'     => (string) @$data['load_hellobar_in']
+                       'load_hellobar_in'     => (string) (!empty($data['load_hellobar_in']) ? $data['load_hellobar_in'] : 'footer')
                     );
                     update_option($this->option_name, $options);
                     $this->options = get_option($this->option_name);
@@ -168,9 +170,13 @@ class HelloBarForWordPress
         $str = wp_kses($str, $allowedposttags, $allowedprotocols);
         return $str;
     }
-    public function is_script()
+    public static function is_script()
     {
-        $hellobar_code = html_entity_decode($this->get_option('hellobar_code'));
+        $options = get_option('_hellobar-for-wordpress--options');
+        $hellobar_code = '';
+        if (is_array($options) && isset($options['hellobar_code'])) {
+            $hellobar_code = html_entity_decode($options['hellobar_code']);
+        }
         if ($hellobar_code) {
             $count = preg_match('/src=(["\'])(.*?)\1/', $hellobar_code, $match);
             if ($count === false) {
@@ -189,13 +195,13 @@ class HelloBarForWordPress
             return false;
         }
     }
-    public function get_api_code($path)
+    public static function get_api_code($path)
     {
         $path1  =   str_replace('/', '', $path);
         $path2  =   str_replace('.js', '', $path1);
         return $path2;
     }
-    public function reset_old_api($api)
+    public static function reset_old_api($api)
     {
         update_option('hellobar_api_key', $api);
         $options = array(
