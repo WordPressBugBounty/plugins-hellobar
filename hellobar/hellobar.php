@@ -7,13 +7,13 @@
  * @package Hello Bar: The Original Popup Software (Top Bars, Exit Intents, Sliders, & More to Grow Your Email List!)
  *
  * @author  hellobar
- * @version 1.5.1
+ * @version 1.5.2
  */
 /*
 Plugin Name: Hello Bar for WordPress
 Plugin URI: http://www.hellobar.com/
 Description: The Original Popup Software (Top Bars, Exit Intents, Sliders, & More to Grow Your Email List!)
-Version: 1.5.1
+Version: 1.5.2
 Tested up to: 6.8
 Requires at least: 5.0
 Requires PHP: 7.4
@@ -32,7 +32,7 @@ class HelloBarForWordPress
     var $longname    =   "Hello Bar for WordPress";
     var $shortname   =   "HelloBar";
     var $namespace   =   'hellobar-for-wordpress';
-    var $version     =   '1.5.1';
+    var $version     =   '1.5.2';
     var $defaults    =   array('hellobar_code'=>"",'load_hellobar_in'=>'footer');
     var $url_path;
     var $option_name;
@@ -86,7 +86,7 @@ class HelloBarForWordPress
         $posttags = get_the_tags();
         if ($posttags) {
             foreach($posttags as $tag) {
-                echo '<script type="text/javascript">window._hellobar_wordpress_tags = window._hellobar_wordpress_tags || []; window._hellobar_wordpress_tags.push("'.strval($tag->name).'"); </script>'; 
+                echo '<script type="text/javascript">window._hellobar_wordpress_tags = window._hellobar_wordpress_tags || []; window._hellobar_wordpress_tags.push(' . json_encode(strval($tag->name)) . '); </script>';
             }
         }
     }
@@ -95,7 +95,7 @@ class HelloBarForWordPress
         $hellobar_code     =   $this->get_option('hellobar_code');
         $newapikey         =   get_option('hellobar_api_key', true);
         if ($newapikey) {
-            echo '<script src="https://my.hellobar.com/'.$hellobar_code.'.js" type="text/javascript" charset="utf-8" async="async"></script>';
+            echo '<script src="' . esc_url('https://my.hellobar.com/' . $hellobar_code . '.js') . '" type="text/javascript" charset="utf-8" async="async"></script>';
         } else {
             if (!empty($hellobar_code)) {
                 $hellobar_code = html_entity_decode($hellobar_code);
@@ -126,7 +126,7 @@ class HelloBarForWordPress
                 switch($data['form_action']){
                 case "update_options":
                     $options = array(
-                       'hellobar_code'         => (string) $data['hellobar_code'],
+                       'hellobar_code'         => (string) $this->sanitize_hellobar_code(stripslashes($_POST['hellobar_code'])),
                        'load_hellobar_in'     => (string) (!empty($data['load_hellobar_in']) ? $data['load_hellobar_in'] : 'footer')
                     );
                     update_option($this->option_name, $options);
@@ -165,10 +165,25 @@ class HelloBarForWordPress
         global $allowedposttags;
         global $allowedprotocols;
         if (is_string($str)) {
-            $str = htmlentities(stripslashes($str), ENT_QUOTES, 'UTF-8');
+            $str = sanitize_text_field(stripslashes($str));
         }
-        $str = wp_kses($str, $allowedposttags, $allowedprotocols);
         return $str;
+    }
+    private function sanitize_hellobar_code($code="")
+    {
+        $code = trim($code);
+        // Old stored values may be entity-encoded — decode first so the pattern match works
+        // html_entity_decode on a plain string is harmless
+        $code = html_entity_decode($code, ENT_QUOTES, 'UTF-8');
+        // Accept a full <script> embed pointing to the hellobar CDN
+        if (preg_match('/^<script\b[^>]*\bsrc=["\']https:\/\/my\.hellobar\.com\/[a-zA-Z0-9_-]+\.js["\'][^>]*>\s*<\/script>$/i', $code)) {
+            return $code;
+        }
+        // Accept a bare API key (used by reset_old_api migration path)
+        if (preg_match('/^[a-zA-Z0-9_-]+$/', $code)) {
+            return $code;
+        }
+        return '';
     }
     public static function is_script()
     {

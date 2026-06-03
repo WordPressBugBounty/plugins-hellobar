@@ -22,7 +22,7 @@ if ($hellobar_code) {
                 <div class="hbarqtiptext1">Not quite sure how to follow the yellow brick road to Hello Bar installation? No worries, we’ve got your back! Just click your ruby red slippers together three times and shoot us a message at support@hellobar.com, and we’ll work our magic to take you from confusion to conversion!</div>
                     </div>
                 </div>
-                <textarea rows="3" name="hellobar_code" placeholder="Enter Hello Bar Site Snippet" ><?php echo $hellobar_code; ?></textarea>
+                <textarea rows="3" name="hellobar_code" placeholder="Enter Hello Bar Site Snippet" ><?php echo esc_textarea(html_entity_decode($hellobar_code, ENT_QUOTES, 'UTF-8')); ?></textarea>
                 <input id="<?php echo $namespace; ?>-load-code-in-header" type="checkbox" name="load_hellobar_in" value="header"<?php echo $load_hellobar_in == 'header' ? ' checked="checked"' : ''; ?> /><label for="<?php echo $namespace; ?>-load-code-in-header">Load the Hello Bar code in your site's Header (before &lt;/head&gt;)</label>
                 <?php
 }
