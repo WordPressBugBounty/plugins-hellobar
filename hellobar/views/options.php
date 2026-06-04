@@ -1,3 +1,4 @@
+<?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
 <form action="" method="post" id="helloBarAdmin">
     <?php wp_nonce_field($namespace."_options", $namespace.'_update_wpnonce'); ?>
     <input type="hidden" name="form_action" value="update_options">
@@ -23,13 +24,13 @@ if ($hellobar_code) {
                     </div>
                 </div>
                 <textarea rows="3" name="hellobar_code" placeholder="Enter Hello Bar Site Snippet" ><?php echo esc_textarea(html_entity_decode($hellobar_code, ENT_QUOTES, 'UTF-8')); ?></textarea>
-                <input id="<?php echo $namespace; ?>-load-code-in-header" type="checkbox" name="load_hellobar_in" value="header"<?php echo $load_hellobar_in == 'header' ? ' checked="checked"' : ''; ?> /><label for="<?php echo $namespace; ?>-load-code-in-header">Load the Hello Bar code in your site's Header (before &lt;/head&gt;)</label>
+                <input id="<?php echo esc_attr($namespace); ?>-load-code-in-header" type="checkbox" name="load_hellobar_in" value="header"<?php echo $load_hellobar_in == 'header' ? ' checked="checked"' : ''; ?> /><label for="<?php echo esc_attr($namespace); ?>-load-code-in-header">Load the Hello Bar code in your site's Header (before &lt;/head&gt;)</label>
                 <?php
 }
 if ($hellobar_code) {
-    ?><p class="helloBarSubmit"><input type="submit" name="Submit" class="helloBarSubmitBtn" value="<?php esc_attr_e('Start Over') ?>"/></p><?php
+    ?><p class="helloBarSubmit"><input type="submit" name="Submit" class="helloBarSubmitBtn" value="<?php esc_attr_e('Start Over', 'hellobar') ?>"/></p><?php
 } else {
-    ?><p class="helloBarSubmit"><input type="submit" name="Submit" class="helloBarSubmitBtn" value="<?php esc_attr_e('Activate Hello Bar') ?>"/></p><?php
+    ?><p class="helloBarSubmit"><input type="submit" name="Submit" class="helloBarSubmitBtn" value="<?php esc_attr_e('Activate Hello Bar', 'hellobar') ?>"/></p><?php
 }
 ?>
         </div>

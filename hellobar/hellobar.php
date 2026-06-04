@@ -1,4 +1,5 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * Hello Bar: The Original Popup Software (Top Bars, Exit Intents, Sliders, & More to Grow Your Email List!)
  *
@@ -7,14 +8,14 @@
  * @package Hello Bar: The Original Popup Software (Top Bars, Exit Intents, Sliders, & More to Grow Your Email List!)
  *
  * @author  hellobar
- * @version 1.5.2
+ * @version 1.5.3
  */
 /*
-Plugin Name: Hello Bar for WordPress
+Plugin Name: Hello Bar Popup Builder
 Plugin URI: http://www.hellobar.com/
 Description: The Original Popup Software (Top Bars, Exit Intents, Sliders, & More to Grow Your Email List!)
-Version: 1.5.2
-Tested up to: 6.8
+Version: 1.5.3
+Tested up to: 7.0
 Requires at least: 5.0
 Requires PHP: 7.4
 Author: hellobar
@@ -32,7 +33,7 @@ class HelloBarForWordPress
     var $longname    =   "Hello Bar for WordPress";
     var $shortname   =   "HelloBar";
     var $namespace   =   'hellobar-for-wordpress';
-    var $version     =   '1.5.2';
+    var $version     =   '1.5.3';
     var $defaults    =   array('hellobar_code'=>"",'load_hellobar_in'=>'footer');
     var $url_path;
     var $option_name;
@@ -63,14 +64,14 @@ class HelloBarForWordPress
             }
         }
         /* Loading Admin CSS only for Hellobar option page */
-        if (isset($_GET['page']) && $_GET['page']=='hellobar.php') {
+        if (isset($_GET['page']) && $_GET['page']=='hellobar') { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             add_action('admin_enqueue_scripts', array($this,'add_css_in_admin'));
             add_action('admin_enqueue_scripts', array($this,'add_js_in_admin'));
         }
     }
     public function add_css_in_admin()
     {
-        wp_register_style('hellobaradmincss', $this->url_path.'/assets/css/hellobar-admin.css');
+        wp_register_style('hellobaradmincss', $this->url_path.'/assets/css/hellobar-admin.css', array(), $this->version);
         wp_enqueue_style('hellobaradmincss');
     }
     public function add_js_in_admin()
@@ -110,7 +111,7 @@ class HelloBarForWordPress
     }
     public function admin_menu()
     {
-        add_menu_page($this->shortname, $this->shortname, 'manage_options', basename(__FILE__), array($this,'admin_options_page'), ($this->url_path.'/images/icon.png'));
+        add_menu_page($this->shortname, $this->shortname, 'manage_options', 'hellobar', array($this,'admin_options_page'), ($this->url_path.'/images/icon.png'));
     }
     public function admin_options_page()
     {
@@ -118,7 +119,7 @@ class HelloBarForWordPress
             wp_die('You do not have sufficient permissions to access this page');
         }
         if (isset($_POST) && !empty($_POST)) {
-            if (isset($_REQUEST[$this->namespace.'_update_wpnonce']) && wp_verify_nonce($_REQUEST[$this->namespace.'_update_wpnonce'], $this->namespace.'_options')) {
+            if (isset($_REQUEST[$this->namespace.'_update_wpnonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_REQUEST[$this->namespace.'_update_wpnonce'])), $this->namespace.'_options')) {
                 $data = array();
                 foreach ($_POST as $key => $val) {
                     $data[$key] = $this->sanitize_data($val);
@@ -126,7 +127,7 @@ class HelloBarForWordPress
                 switch($data['form_action']){
                 case "update_options":
                     $options = array(
-                       'hellobar_code'         => (string) $this->sanitize_hellobar_code(stripslashes($_POST['hellobar_code'])),
+                       'hellobar_code'         => (string) $this->sanitize_hellobar_code(isset($_POST['hellobar_code']) ? wp_unslash($_POST['hellobar_code']) : ''), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                        'load_hellobar_in'     => (string) (!empty($data['load_hellobar_in']) ? $data['load_hellobar_in'] : 'footer')
                     );
                     update_option($this->option_name, $options);
@@ -199,7 +200,7 @@ class HelloBarForWordPress
             } else {
                 if (!empty($match)) {
                     $jsurl      =   $match[2];
-                    $parts      =   parse_url($jsurl);
+                    $parts      =   wp_parse_url($jsurl);
                     $path       =   $parts['path'];
                     return HelloBarForWordPress::get_api_code($path);
                 } else {
